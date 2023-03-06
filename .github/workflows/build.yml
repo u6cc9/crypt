@@ -1,0 +1,32 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+
+    - name: Install dependencies
+      run: go get .
+
+    - name: Build packages
+      env:
+        CGO_ENABLED: 0
+      run: |
+        GOOS=darwin  GOARCH=amd64 go build -o crypt/crypt-darwin-amd64      -ldflags="-s -w"
+        GOOS=darwin  GOARCH=arm64 go build -o crypt/crypt-darwin-arm64      -ldflags="-s -w"
+        GOOS=windows GOARCH=386   go build -o crypt/crypt-windows-386.exe   -ldflags="-s -w"
+        GOOS=windows GOARCH=amd64 go build -o crypt/crypt-windows-amd64.exe -ldflags="-s -w"
+        GOOS=linux   GOARCH=386   go build -o crypt/crypt-linux-386         -ldflags="-s -w"
+        GOOS=linux   GOARCH=amd64 go build -o crypt/crypt-linux-amd64       -ldflags="-s -w"
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: crypt-${{ github.repository_id }}-v${{ github.run_number }}
+        path: crypt
+        if-no-files-found: error
